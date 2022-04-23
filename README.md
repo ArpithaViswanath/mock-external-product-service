@@ -1,0 +1,1 @@
+# mock-external-product-service
