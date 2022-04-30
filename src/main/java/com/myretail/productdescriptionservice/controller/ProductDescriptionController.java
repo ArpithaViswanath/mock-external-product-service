@@ -1,10 +1,10 @@
 package com.myretail.productdescriptionservice.controller;
 
 import com.myretail.productdescriptionservice.models.ProductDescription;
-import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +16,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static com.myretail.productdescriptionservice.constants.ProductDescriptionServiceConstants.*;
+
 @RestController
+@Slf4j
 @RequestMapping("/productdescription")
 public class ProductDescriptionController {
 
@@ -39,12 +42,15 @@ public class ProductDescriptionController {
             }
     )
     public ResponseEntity<List<ProductDescription>> getAllProducts() {
+
+        log.info("Received the request to fetch all Product Descriptions");
+
         return new ResponseEntity<>(productDescMap.entrySet().stream()
                 .map(entry -> new ProductDescription(entry.getKey(), entry.getValue()))
                 .collect(Collectors.toList()), HttpStatus.OK);
     }
 
-    @RequestMapping(value = "/{productId}",
+    @RequestMapping(value = PATH_VARIABLE_PRODUCT_ID,
             method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation("Fetches the product description for a given product ID")
@@ -53,7 +59,10 @@ public class ProductDescriptionController {
                     @ApiResponse(code = 200, message = "Successful Retrieval of Product Description")
             }
     )
-    public ResponseEntity<ProductDescription> getProduct(@PathVariable("productId") String productId) {
+    public ResponseEntity<ProductDescription> getProduct(@PathVariable(PRODUCT_ID) String productId) {
+
+        log.info("Received the request to fetch the Product Description for product ID {}!.", productId);
+
         if (productDescMap.containsKey(productId)) {
             return new ResponseEntity<>(
                     new ProductDescription(productId, productDescMap.get(productId)),
@@ -71,7 +80,36 @@ public class ProductDescriptionController {
             }
     )
     public ResponseEntity<ProductDescription> addProduct(@RequestBody ProductDescription productDescription) {
+
+        log.info("Received the request to add/update the Product Description for product ID {}!", productDescription.getId());
+
         productDescMap.put(productDescription.getId(), productDescription.getName());
         return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @RequestMapping(value = PATH_VARIABLE_PRODUCT_ID,
+            method = RequestMethod.DELETE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    @ApiOperation("Deletes the product description for a given product ID")
+    @ApiResponses(
+            value = {
+                    @ApiResponse(code = 200, message = "Successful deletion of Product Description"),
+                    @ApiResponse(code = 404, message = "Product ID not found for deletion")
+            }
+    )
+    public ResponseEntity<?> deleteProduct(@PathVariable(PRODUCT_ID) String productId) {
+
+        log.info("Received the request to delete the Product Description for product ID {}!", productId);
+
+        if (productDescMap.containsKey(productId)) {
+            productDescMap.remove(productId);
+            return new ResponseEntity<>(productDescMap.entrySet().stream()
+                    .map(entry -> new ProductDescription(entry.getKey(), entry.getValue()))
+                    .collect(Collectors.toList()), HttpStatus.OK);
+        } else {
+            log.info("No product id {} found!", productId);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
     }
 }
