@@ -20,7 +20,7 @@ import static com.myretail.productdescriptionservice.constants.ProductDescriptio
 
 @RestController
 @Slf4j
-@RequestMapping("/productdescription")
+@RequestMapping("/v1/productdescription")
 public class ProductDescriptionController {
 
     private static Map<String, String> productDescMap;
@@ -50,7 +50,7 @@ public class ProductDescriptionController {
                 .collect(Collectors.toList()), HttpStatus.OK);
     }
 
-    @RequestMapping(value = PATH_VARIABLE_PRODUCT_ID,
+    @RequestMapping(value = QUERY_PARAM_PRODUCT_ID,
             method = RequestMethod.GET,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation("Fetches the product description for a given product ID")
@@ -81,13 +81,39 @@ public class ProductDescriptionController {
     )
     public ResponseEntity<ProductDescription> addProduct(@RequestBody ProductDescription productDescription) {
 
-        log.info("Received the request to add/update the Product Description for product ID {}!", productDescription.getId());
+        log.info("Received the request to create the Product Description for a product ID {}!", productDescription.getId());
 
-        productDescMap.put(productDescription.getId(), productDescription.getName());
-        return new ResponseEntity<>(HttpStatus.OK);
+        String newProductId = productDescription.getId();
+        String newProductName = productDescription.getName();
+        productDescMap.put(newProductId, newProductName);
+        return new ResponseEntity<>(new ProductDescription(newProductId, productDescMap.get(newProductId)),
+                HttpStatus.OK);
     }
 
-    @RequestMapping(value = PATH_VARIABLE_PRODUCT_ID,
+    @RequestMapping(value = QUERY_PARAM_PRODUCT_ID,
+            method = RequestMethod.PUT,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    @ApiOperation("Updates the product description for a given product ID")
+    @ApiResponses(
+            value = {
+                    @ApiResponse(code = 200, message = "Successful update of Product Description")
+            }
+    )
+    public ResponseEntity<ProductDescription> updateProduct(@PathVariable(PRODUCT_ID) String productId,
+                                                            @RequestBody String productName) {
+
+        log.info("Received the request to update the Product Description for product ID {}!.", productId);
+
+        if (productDescMap.containsKey(productId)) {
+            productDescMap.put(productId, productName);
+            return new ResponseEntity<>(new ProductDescription(productId, productDescMap.get(productId)),
+                    HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @RequestMapping(value = QUERY_PARAM_PRODUCT_ID,
             method = RequestMethod.DELETE,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @ApiOperation("Deletes the product description for a given product ID")
